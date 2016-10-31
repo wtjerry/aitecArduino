@@ -1,0 +1,115 @@
+<!--
+Module:		AITEC
+Semester: 	HS 2015
+
+Name:		Push Post example page
+Version: 	1.0
+Author: 	Michael Handschuh, Assistent, HSLU Technik & Architektur
+Created:	27.02.2015
+Modified:	-
+Copyright:	(c) HSLU AITEC, 2015
+-->
+<!doctype html>
+<html>
+    <head>
+    	  <!-- 
+		  jQuery is not needed for this example, but makes it much simpler to attach click functions, etc.
+		  It's loaded from the apache webserver on localhost, as internet connection might not be available
+		  and reading js with plain nodejs/socket.io is not trivial.
+		  -->
+        <script src='//localhost/jquery.js'></script> 
+        
+        <!-- The following file mus always be included from the nodejs/socket.io server. If you download this file and change to load it from another place you will receive cross-domain error -->
+        <script src='//localhost:1337/socket.io/socket.io.js'></script>
+		
+		<style type="text/css">
+			body {
+				padding:20px;
+				font-family:arial,helvetica,clean,sans-serif;
+				font-size: 14px;
+				background: #FBFBFB;
+			}
+			h1 {
+				font-size:1.5em;
+				border-left: 5px solid #415e6c;
+				padding-left: 20px;
+			}
+			h2 {
+				font-size: 1.3em;
+				color:#415e6c;
+			}
+			h3 {
+				font-size: 1.1em;
+				color:#415e6c;
+			}
+			dt {
+				clear:both;
+				font-weight:bold;
+				float:left;
+				width:150px;
+			}
+			dd {
+				float:left;
+				margin-left: 5px;
+				font-size: 0.9em;
+			}
+
+			div#content {
+				background: #F0F0F0;
+				border: 1px solid #D3DFE5;
+				padding: 10px;
+			}
+
+			div#footer {
+				font-size: 0.8em;
+				margin-top: 10px;
+			}
+
+			p.aitec_header_intro {
+			  border-left: 2px solid #415e6c;
+			  font-size: 0.9em;
+			  margin-top: -8px;
+			  padding-left: 10px;
+			  color: #415e6c;
+			}
+
+			ul#messages {
+				border:1px solid #000;
+				height:200px;
+				width:200px;
+			}
+		</style>
+    </head>
+    <body>
+		<h1>AITEC - HTML5 - Arduino ReST-Push (sample)</h1>
+		<p class="aitec_header_intro">
+Arduino sendet die Daten seines Licht-Sensors alle 500ms an den Server.<br />
+			Der Server empfängt die Daten und sendet sie an alle verbundenen Clients.<br /><br />
+			&raquo;&nbsp;JavaScript und Websockets (oder ähnliche Technology) muss verfügbar sein.
+		</p>	
+		<div id="content">
+		<p>Arduino LightSensor output:</p>
+<div style="border:1px solid #000;width:200px;height:18px;position:relative;text-align:center;padding-top:2px;"><div style="position:absolute;top:0;left:0;bottom:0;background: none repeat scroll 0% 0% rgba(255, 0, 0, 0.2); width: 0%; height: 20px;" id="peak"></div>
+  <span style="font-weight: bold;"><span id="message">729</span> / 1000</span></div>
+
+		</div>
+		<div id="footer">&copy; HSLU AITEC, 2015</div>				
+		
+		
+		<script language="javascript">
+				/**
+				 * Handles page loaded event
+				 */
+		        jQuery(function() {
+		         var socket = io.connect('//localhost:1337'); // Connect to socket.io server
+				
+					// Register listener to echo function (clientside method)
+		         socket.on('sensordata', function(data) {
+						var obj = JSON.parse(data);
+						 jQuery("#peak").css("width", (obj.sValue/10) + "%");
+		             jQuery('#message').html(obj.sValue);
+		         });
+            });
+        </script>
+    </body>
+</html>

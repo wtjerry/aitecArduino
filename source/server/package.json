@@ -1,0 +1,13 @@
+{
+  "name": "parking space manager",
+  "version": "1.0.0",
+  "description": "Reports if a parking space is occupied and displays a reservation status",
+  "main": "pushpost.js",
+  "dependencies": {
+    "socket.io": "^1.4.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
