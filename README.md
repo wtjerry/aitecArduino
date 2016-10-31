@@ -6,4 +6,4 @@ using an arduino with 2 distance sensors and a display to create a parking syste
 The state is also replicated to a website.
 
 
-was "forked" from Michael Handschuh "aitec-push-example-arduino"..
+was "forked" from Michael Handschuh "aitec-push-example-arduino".
