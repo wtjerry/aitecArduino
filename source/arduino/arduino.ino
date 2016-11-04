@@ -102,6 +102,24 @@ void displayParkingLotState() {
     sprintf(color, "green");
 }
 
+void updateParkingLotState(long currentMillis)
+{
+  int sensor1Value = analogRead(SENSOR1_PIN);
+  int sensor2Value = analogRead(SENSOR2_PIN);
+  bool isOccupied = computeAndSetOccupiedState(sensor1Value, sensor2Value);
+  setParkingLotState(isOccupied);
+
+  if(currentMillis - lastTimeServerWasCalled >= serverCallDelay) {
+    int serverParkingLotState = sendHttpRequest(sensor1Value, sensor2Value, isOccupied);
+    if(serverParkingLotState != -1)
+      parkingLotState = serverParkingLotState;  
+
+    lastTimeServerWasCalled = millis();
+  }
+
+  displayParkingLotState();
+}
+
 void loop()
 {
     // Get current timestamp
@@ -120,20 +138,7 @@ void loop()
     }
 
     if(currentMillis - lastMillis >= periodicDelay) {
-      int sensor1Value = analogRead(SENSOR1_PIN);
-      int sensor2Value = analogRead(SENSOR2_PIN);
-      bool isOccupied = computeAndSetOccupiedState(sensor1Value, sensor2Value);
-      setParkingLotState(isOccupied);
-      
-      if(currentMillis - lastTimeServerWasCalled >= serverCallDelay) {
-        int serverParkingLotState = sendHttpRequest(sensor1Value, sensor2Value, isOccupied);
-        if(serverParkingLotState != -1)
-          parkingLotState = serverParkingLotState;  
-
-        lastTimeServerWasCalled = millis();
-      }
-
-      displayParkingLotState();
+      updateParkingLotState(currentMillis);
       lastMillis = millis();
     }     
   
