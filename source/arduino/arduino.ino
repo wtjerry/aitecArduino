@@ -23,6 +23,8 @@ long initialStartTime = -1;
 int firstStartDelay = 1000; 
 int periodicDelay = 500;
 long lastMillis = -1;
+int serverCallDelay = 30000;
+long lastTimeServerWasCalled = -1;
 
 void setup() {
   pinMode(SENSOR1_PIN, INPUT);
@@ -71,6 +73,9 @@ bool computeOccupiedState(int sensor1Value, int sensor2Value)
   return areBothSensorsOccupied;
 }
 
+void displayParkingLotState() {
+}
+
 void loop()
 {
     // Get current timestamp
@@ -83,14 +88,23 @@ void loop()
     
   } else {
   
-    if(lastMillis == -1 || currentMillis - lastMillis >= periodicDelay) {
-        int sensor1Value = analogRead(SENSOR1_PIN);
-        int sensor2Value = analogRead(SENSOR2_PIN);
-        bool isOccupied = computeOccupiedState(sensor1Value, sensor2Value);
-        sendHttpRequest(sensor1Value, sensor2Value, isOccupied);
+    if(lastMillis == -1 && lastTimeServerWasCalled == -1) {
+      lastMillis = millis();
+      lastTimeServerWasCalled = lastMillis;
+    }
 
-        lastMillis = millis();
-    }   
+    if(currentMillis - lastMillis >= periodicDelay) {
+      int sensor1Value = analogRead(SENSOR1_PIN);
+      int sensor2Value = analogRead(SENSOR2_PIN);
+      bool isOccupied = computeOccupiedState(sensor1Value, sensor2Value);
+      
+      if(currentMillis - lastTimeServerWasCalled >= serverCallDelay) {
+        sendHttpRequest(sensor1Value, sensor2Value, isOccupied);                  
+      }
+
+      displayParkingLotState();
+      lastMillis = millis();
+    }     
   
     // Read server response and print it to the serial port
     if (client.available()) {
