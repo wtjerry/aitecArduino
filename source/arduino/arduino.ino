@@ -26,8 +26,11 @@ long lastMillis = -1;
 int serverCallDelay = 30000;
 long lastTimeServerWasCalled = -1;
 
-bool isOccupied = false;
-bool isReserved = false;
+enum {
+  IS_OCCUPIED = 1,
+  IS_RESERVED = 2
+};
+int parkingLotState = 0;
 
 void setup() {
   pinMode(SENSOR1_PIN, INPUT);
@@ -46,7 +49,7 @@ void setup() {
 }
 
 
-void sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
+int sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
   requestOngoing = true;
 
   if (client.connect(server, 1337)) {
@@ -63,24 +66,36 @@ void sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
     client.println("Content-Type: application/json");
     client.println("Content-Length: 14");
     client.println();                                              // This empty line is needed as request body is always separated by an empty line
-    client.println(buf);                              
+    client.println(buf);
+
+    char c = client.read();
+    Serial.print(c);
+    return c;                    
   } 
   else {
     Serial.println("connection failed");
   }
+  
+  return -1;
 }
 
-bool computeOccupiedState(int sensor1Value, int sensor2Value)
+bool computeAndSetOccupiedState(int sensor1Value, int sensor2Value)
 {
   bool areBothSensorsOccupied = sensor1Value >= sensorIsOccupied && sensor2Value >= sensorIsOccupied;
+
+  if(areBothSensorsOccupied == false && parkingLotState & IS_OCCUPIED)
+    parkingLotState -= IS_OCCUPIED;
+  else if (areBothSensorsOccupied == true && (parkingLotState & IS_OCCUPIED) == false)
+    parkingLotState += IS_OCCUPIED;
+
   return areBothSensorsOccupied;
 }
 
 void displayParkingLotState() {
   char color[10];
-  if(isOccupied)
+  if(parkingLotState & IS_OCCUPIED)
     sprintf(color, "red");
-  else if(isReserved)
+  else if(parkingLotState & IS_RESERVED)
     sprintf(color, "yellow");
   else
     sprintf(color, "green");
@@ -106,22 +121,18 @@ void loop()
     if(currentMillis - lastMillis >= periodicDelay) {
       int sensor1Value = analogRead(SENSOR1_PIN);
       int sensor2Value = analogRead(SENSOR2_PIN);
-      isOccupied = computeOccupiedState(sensor1Value, sensor2Value);
+      bool isOccupied = computeAndSetOccupiedState(sensor1Value, sensor2Value);
       
       if(currentMillis - lastTimeServerWasCalled >= serverCallDelay) {
-        sendHttpRequest(sensor1Value, sensor2Value, isOccupied);                  
+        int serverParkingLotState = sendHttpRequest(sensor1Value, sensor2Value, isOccupied);
+        if(serverParkingLotState != -1)
+          parkingLotState = serverParkingLotState;           
       }
 
       displayParkingLotState();
       lastMillis = millis();
     }     
   
-    // Read server response and print it to the serial port
-    if (client.available()) {
-      char c = client.read();
-      Serial.print(c);
-    }
-
     // if the server's disconnected, stop the client and unblock requests
     if (requestOngoing && !client.connected()) {
       Serial.println();
