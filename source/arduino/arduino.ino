@@ -26,6 +26,9 @@ long lastMillis = -1;
 int serverCallDelay = 30000;
 long lastTimeServerWasCalled = -1;
 
+bool isOccupied = false;
+bool isReserved = false;
+
 void setup() {
   pinMode(SENSOR1_PIN, INPUT);
   pinMode(SENSOR2_PIN, INPUT);
@@ -74,6 +77,13 @@ bool computeOccupiedState(int sensor1Value, int sensor2Value)
 }
 
 void displayParkingLotState() {
+  char color[10];
+  if(isOccupied)
+    sprintf(color, "red");
+  else if(isReserved)
+    sprintf(color, "yellow");
+  else
+    sprintf(color, "green");
 }
 
 void loop()
@@ -96,7 +106,7 @@ void loop()
     if(currentMillis - lastMillis >= periodicDelay) {
       int sensor1Value = analogRead(SENSOR1_PIN);
       int sensor2Value = analogRead(SENSOR2_PIN);
-      bool isOccupied = computeOccupiedState(sensor1Value, sensor2Value);
+      isOccupied = computeOccupiedState(sensor1Value, sensor2Value);
       
       if(currentMillis - lastTimeServerWasCalled >= serverCallDelay) {
         sendHttpRequest(sensor1Value, sensor2Value, isOccupied);                  
