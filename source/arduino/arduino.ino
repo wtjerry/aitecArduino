@@ -79,15 +79,16 @@ int sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
   return -1;
 }
 
-bool computeAndSetOccupiedState(int sensor1Value, int sensor2Value)
-{
-  bool areBothSensorsOccupied = sensor1Value >= sensorIsOccupied && sensor2Value >= sensorIsOccupied;
-
-  if(areBothSensorsOccupied == false && parkingLotState & IS_OCCUPIED)
+void setParkingLotState(bool areBothSensorsOccupied) {
+    if(areBothSensorsOccupied == false && parkingLotState & IS_OCCUPIED)
     parkingLotState -= IS_OCCUPIED;
   else if (areBothSensorsOccupied == true && (parkingLotState & IS_OCCUPIED) == false)
     parkingLotState += IS_OCCUPIED;
+}
 
+bool computeAndSetOccupiedState(int sensor1Value, int sensor2Value)
+{
+  bool areBothSensorsOccupied = sensor1Value >= sensorIsOccupied && sensor2Value >= sensorIsOccupied;
   return areBothSensorsOccupied;
 }
 
@@ -122,6 +123,7 @@ void loop()
       int sensor1Value = analogRead(SENSOR1_PIN);
       int sensor2Value = analogRead(SENSOR2_PIN);
       bool isOccupied = computeAndSetOccupiedState(sensor1Value, sensor2Value);
+      setParkingLotState(isOccupied);
       
       if(currentMillis - lastTimeServerWasCalled >= serverCallDelay) {
         int serverParkingLotState = sendHttpRequest(sensor1Value, sensor2Value, isOccupied);
