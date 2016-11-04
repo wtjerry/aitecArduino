@@ -7,3 +7,6 @@ sensorIsOccupied is a constant which is currently 1. Idk what the range of that 
 SENSOR1_PIN and SENSOR2_PIN are currently set to arbitary values need to be set correctly.
 
 
+IP addresses / ports may be wrong, same for host php address.
+
+
