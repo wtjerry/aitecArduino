@@ -1,0 +1,30 @@
+every minute from arduino to host:
+sensor1 = int, 
+sensor2 = int, 
+occupied = boolean
+getParkingLotState --> callback(parkingLotState)
+
+
+
+arduino itself:
+calculate occupied state (from sensor1 and sensor2)
+update parkingLotState
+display parkingLotState state
+
+
+
+parkingLotState is a Flag:
+  - reserved
+  - occupied
+
+Possible states: 
+        - reserved & occupied 
+        - reserved
+        - occupied
+        - NONE
+
+One possibility for indicating the parkingLotState is:
+- reserved & occupied --> RED
+- reserved            --> YELLOW
+- occupied            --> RED
+- NONE                --> GREEN
