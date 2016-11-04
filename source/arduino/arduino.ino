@@ -128,7 +128,9 @@ void loop()
       if(currentMillis - lastTimeServerWasCalled >= serverCallDelay) {
         int serverParkingLotState = sendHttpRequest(sensor1Value, sensor2Value, isOccupied);
         if(serverParkingLotState != -1)
-          parkingLotState = serverParkingLotState;           
+          parkingLotState = serverParkingLotState;  
+
+        lastTimeServerWasCalled = millis();
       }
 
       displayParkingLotState();
