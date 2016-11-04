@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
-#define BUTTON_PIN 6    // Button on Pin D6
-#define LIGHT_PIN A0
+#define SENSOR1_PIN 1
+#define SENSOR2_PIN 2
 
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -18,14 +18,15 @@ EthernetClient client;
 
 
 boolean requestOngoing = false;
-int buttonState = LOW;
+int sensorIsOccupied = 1;
 long initialStartTime = -1;
-int firstStartDelay = 150; // Light sensor init time
+int firstStartDelay = 1000; 
 int periodicDelay = 500;
 long lastMillis = -1;
 
 void setup() {
-  pinMode(BUTTON_PIN, INPUT);
+  pinMode(SENSOR1_PIN, INPUT);
+  pinMode(SENSOR2_PIN, INPUT);
   
  // Open serial communications and wait for port to open:
   Serial.begin(9600);
@@ -37,17 +38,18 @@ void setup() {
   delay(1000);
   
   Serial.println("connecting...");
-  sendHttpRequest(0);
 }
 
 
-void sendHttpRequest(int value) {
+void sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
   requestOngoing = true;
 
   if (client.connect(server, 1337)) {
     Serial.println("connected");
     char buf[100];
-    sprintf(buf, "{\"sValue\":%d}",value);
+    sprintf(buf, "{\"sSensor1\":%d}",sensor1Value);
+    sprintf(buf, "{\"sSensor2\":%d}",sensor2Value);
+    sprintf(buf, "{\"sIsOccupied\":%d}",isOccupied);
     
     // Make a HTTP request:
     client.println("POST /rest-example/pushServer.php HTTP/1.1");
@@ -63,6 +65,12 @@ void sendHttpRequest(int value) {
   }
 }
 
+bool computeOccupiedState(int sensor1Value, int sensor2Value)
+{
+  bool areBothSensorsOccupied = sensor1Value >= sensorIsOccupied && sensor2Value >= sensorIsOccupied;
+  return areBothSensorsOccupied;
+}
+
 void loop()
 {
     // Get current timestamp
@@ -76,20 +84,13 @@ void loop()
   } else {
   
     if(lastMillis == -1 || currentMillis - lastMillis >= periodicDelay) {
-        int sensorValue = analogRead(LIGHT_PIN);
-        sendHttpRequest(sensorValue);
+        int sensor1Value = analogRead(SENSOR1_PIN);
+        int sensor2Value = analogRead(SENSOR2_PIN);
+        bool isOccupied = computeOccupiedState(sensor1Value, sensor2Value);
+        sendHttpRequest(sensor1Value, sensor2Value, isOccupied);
+
         lastMillis = millis();
     }   
-    
-    
-    // Do not send multiple requests at the same time
-    if(!requestOngoing) {
-      buttonState = digitalRead(BUTTON_PIN);
-      if(buttonState == HIGH) {
-        int sensorValue = analogRead(LIGHT_PIN);
-        sendHttpRequest(sensorValue);
-      }
-    }
   
     // Read server response and print it to the serial port
     if (client.available()) {

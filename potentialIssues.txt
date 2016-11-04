@@ -1,0 +1,9 @@
+Content-Lenght: 14 is probably not enough, but idk how to exactly find out the required bytes. Maybee using a String instead of char[] and then using thatString.length().
+
+
+sensorIsOccupied is a constant which is currently 1. Idk what the range of that sensor is.
+
+
+SENSOR1_PIN and SENSOR2_PIN are currently set to arbitary values need to be set correctly.
+
+
