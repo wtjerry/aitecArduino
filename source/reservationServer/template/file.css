@@ -1,0 +1,126 @@
+ul {list-style-type: none;}
+body {font-family: Verdana, sans-serif;}
+#calendar{
+    float: left;
+    width: 40%;
+    min-width: 300px;
+    margin-right: 50px;
+}
+
+#month_name{ 
+   text-align: center;
+}
+
+/* Month header */
+.month {
+    padding-left: 20%;
+    padding: 70px 25px;
+    background: #1abc9c;
+}
+
+/* Month list */
+.month ul {
+    margin: 0;
+    padding: 0;
+}
+
+.month ul li {
+    color: white;
+    font-size: 20px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+/* Previous button inside month header */
+.month .prev {
+    float: left;
+    padding-top: 10px;
+}
+.month .prev:hover,
+.month .next:hover {
+    cursor: pointer;
+}
+     
+/* Next button */
+.month .next {
+    float: right;
+    padding-top: 10px;
+}
+
+/* Weekdays (Mon-Sun) */
+.weekdays {
+    padding: 10px 0;
+    background: #ccc;
+    margin: 0;
+}
+
+.weekdays li {    
+    list-style-type: none;
+    display: inline-block;
+    width: 12.5%;
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: #777;
+}
+
+/* Days (1-31) */
+.days {
+    padding: 10px 0;
+    background: #eee;
+    margin: 0;
+}
+.days li:hover{
+    cursor : pointer;
+}
+.days .othermonth{
+    color: #999;
+}
+.days li {
+    list-style-type: none;
+    display: inline-block;
+    width: 12.5%;
+    text-align: center;
+    margin-bottom: 5px;
+    font-size:12px;
+    color:#222;
+}
+
+/* Highlight the "current" day */
+.days li .active {
+    padding: 5px;
+    background: #1abc9c;
+    color: white !important
+}
+.time{    
+    list-style-type: none;
+    display: inline-block;
+    width: 20%;
+    text-align: left;
+    font-size: 12px;
+    height: 20px;
+    color: #222;
+    margin:0 !important;
+    padding: 0!important;
+}
+.timetable li:nth-child(odd){
+    background: #ccc;
+}
+.timetable li{
+float: left;
+}
+.info{
+    list-style-type: none;
+    display: inline-block;
+    width: 70%;
+    text-align: left;
+    font-size: 15px;
+    color: #222;
+    margin:0;
+}
+.timetable{
+	padding: 0 !important;
+	float:left;
+	width:50%;
+	min-width: 450px;
+}
