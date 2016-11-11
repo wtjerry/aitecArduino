@@ -1,6 +1,10 @@
-<html>
+<!DOCTYPE html>
+<html lang="de_ch">
 	<head>
+        <meta charset="UTF-8"/>
 		<link rel="stylesheet" href="file.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script src="file.js"></script>
 		<title>
 			Hello
 		</title>
@@ -9,8 +13,8 @@
 <div id="calendar">
 	 <div class="month">
   <ul>
-    <li class="prev">&#10094;</li>
-    <li class="next">&#10095;</li>
+    <li id="prev" class="prev">&#10094;</li>
+    <li id="next" class="next">&#10095;</li>
     <li id="month_name">
       August<br>
       <span style="font-size:18px">2016</span>
@@ -28,7 +32,8 @@
   <li>Su</li>
 </ul>
 
-<ul class="days">
+<ul class="days" id="input">
+    <!--
   <li class="othermonth">29</li>
   <li class="othermonth">30</li>
   <li>1</li>
@@ -63,7 +68,7 @@
   <li>30</li>
   <li>31</li>
   <li class="othermonth">1</li>
-  <li class="othermonth">2</li>
+  <li class="othermonth">2</li>--->
 </ul>
 </div>
 <div>
@@ -80,5 +85,8 @@
 	<li class="info">Test2</li>
         </ul>
 </div>
+    <div id="month">
+
+    </div>
 	</body>
 </html>
