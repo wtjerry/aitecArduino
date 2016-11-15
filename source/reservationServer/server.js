@@ -4,17 +4,33 @@ var fs = require('fs');
 var querystring = require('querystring');
 var utils = require ('utils');
 var mysql = require('mysql');
+//var crypto = require('crypto');
+//cannot download crypto at work.
+
+var all_session = new SessionStore();
 
 http.createServer(function (req, res){
     try{
-        var pathname = url.parse(req.url).pathname;
+        var stor = {
+            'req': req,
+            'res': res,
+            cookie:  parseCookies(req),
+            ncookie: '',
+            pathname: url.parse(req.url).pathname
+        };
+        fs.writeFile("test.txt", req.connection.remoteAddress, function(err){console.log(err)});
+        stor.session = all_session.startSession(stor);
+        
         if(req.method=="POST"){
             post(req, function(post){
-                serverRouting(pathname, post, res, respondToRequest);
+                stor.post = post;
+                stor.pg = stor.post;
+                serverRouting(stor, respondToRequest);
             });
         }else{
-            var get=url.parse(req.url, true).query;
-            serverRouting(pathname.substring(1), get, res, respondToRequest);
+            stor.get = url.parse(req.url, true).query;
+                stor.pg = stor.get;
+            serverRouting(stor, respondToRequest);
         }
     }catch(error){
         console.log(error);
@@ -24,53 +40,58 @@ http.createServer(function (req, res){
 }).listen(80);
 
 
-function respondToRequest(error, data, res){
-    if(!error){
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(data.toString());
-        res.end();
+function respondToRequest(stor){
+    if(!(stor.error)){
+        stor.headCode = 200;
+        stor.headInf = {'Content-Type': 'text/html', 'Set-Cookie': stor.ncookie};
+        writeResponse(stor.headCode, stor.headInf, stor.content, stor.res, stor.session);
     }else{
-        res.writeHead(404, {'Content-Type': 'text/html'});
-        fs.readFile('htmlfiles/error.html', function(error, data){
+        stor.headCode = 404;
+        stor.headInf = {'Content-Type': 'text/html'};
+        fs.readFile('htmlfiles/error.html', function(error, dat){
             if(!error){
-                res.write(data.toString());
+                stor.content=dat.toString();
             }else{
-                console.log(error);
-                res.write("<html><head><title>ERROR</title></head><body>Internal Server Error </body></html>");
+                stor.content="<html><head><title>ERROR</title></head><body>Internal Server Error</body></html>";
             }
-            res.end();
+            writeResponse(stor.headCode, stor.headInf, stor.content, stor.res);
         });
     }
 };
-
-function serverRouting(path, param, res, callback){
-    var error = "";
-    var data = "hello world!";
-    path = ((path=="")?"index.html": path);
-    console.log(path);
-    if(Object.keys(param).length === 0){
+function writeResponse(headCode, headInf, content, res, ses){
+    all_session.updateSession(ses);
+    res.writeHead(headCode, headInf);
+    res.write(content);
+    res.end();    
+}
+function serverRouting(stor, callback){
+    stor.error = "";
+    
+    stor.pathname = ((stor.pathname=="/")?"index.html": stor.pathname);
+    console.log
+    if(Object.keys(stor.pg).length === 0){
         //if no get and POST were given
         fs.readFile('htmlfiles/calendar.html', function(err, dat){
-            if(err)
-                callback(err, "", res);
-            else{
-                callback(error, dat, res);
-            }
+            stor.error = err;
+            stor.content = dat.toString();
+            
+            callback(stor);
         });
     }else{
     //if there is an action to be done it has to be defined here.
-        switch (param.action){
+        switch (stor.pg){
             case 'test':
-                        callback(error, data, res);
+                stor.content = "Do whatever you want!";
+                
+                callback(stor);
             break;
             default :
                 //if you wanna have a pagecall it has to be here
                 fs.readFile('htmlfiles/pagenotfound.html', function(err, dat){
-                    if(err)
-                        callback(err, "", res);
-                    else{
-                        callback(error, dat, res);
-                    }
+                    stor.error += err;
+                    stor.content = dat.toString();
+                    
+                    callback(stor);
                 });
         }
     }
@@ -87,8 +108,76 @@ function post(req, callback){
     });
 }
 
-var isEmpty = function(obj) {
-   return
- }
+function parseCookies (request) {
+    var list = {},
+        rc = request.headers.cookie;
+
+    rc && rc.split(';').forEach(function( cookie ) {
+        var parts = cookie.split('=');
+        list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+
+    return list;
+}
+
+function SessionStore(){
+    this.session = new Map();
+    
+    this.newSession = function(sessionParam){
+        if(sessionParam.sid){
+            if(!this.session.has(sessionParam.sid)){
+                this.session.set(sessionParam.sid, sessionParam);
+                return ('sid='+ sessionParam.sid +";");
+            }else{
+                throw new Error("Session is in use!");
+            }
+        }else{
+            throw new Error("Invalid sessionrequest!");
+        }
+    };
+    this.startSession = function(stor){
+        sid = stor.cookie.sid;
+        if(stor.cookie.sid){
+            if(!this.session.has(sid)){
+                stor.ncookie += this.newSession({'sid':sid});
+            }else{
+                console.log("sesssion exists :)");
+            }
+        }else{
+            sid = this.generateKey();
+            stor.ncookie += this.newSession({'sid':sid});
+        }
+        return this.getSession(sid);
+    }
+    this.getSession = function(sid){
+        if(this.session.has(sid)){
+            return this.session.get(sid);
+        }else{
+            throw new Error("There is no such key!");
+        }
+    };
+    
+    this.setSession = function(params){
+        this.newSession(params);
+    };
+    
+    this.killSession = function(){
+        
+    };
+    
+    this.updateSession = function(sid, sessionParam){
+        if(this.session.has(sid)){
+            this.session.set(sid, sessionParam);
+        }
+    };
+    this.generateKey = function(){
+        return Math.random().toString();
+        /*
+        var sha = crypto.createHash('sha256');
+        sha.update(Math.random().toString());
+        return sha.digest('hex');   */     
+    }
+}
+
 
 console.log('Server running at http://127.0.0.1:80/');
