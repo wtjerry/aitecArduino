@@ -4,7 +4,7 @@ var fs = require('fs');
 var querystring = require('querystring');
 var utils = require ('utils');
 var mysql = require('mysql');
-//var crypto = require('crypto');
+var crypto = require('crypto');
 //cannot download crypto at work.
 
 var all_session = new SessionStore();
@@ -16,9 +16,10 @@ http.createServer(function (req, res){
             'res': res,
             cookie:  parseCookies(req),
             ncookie: '',
-            pathname: url.parse(req.url).pathname
+            pathname: url.parse(req.url).pathname,
+            ipaddress: req.connection.remoteAddress
         };
-        fs.writeFile("test.txt", req.connection.remoteAddress, function(err){console.log(err)});
+        console.log("Request from: " + stor.ipaddress + "    path: " + stor.pathname);
         stor.session = all_session.startSession(stor);
         
         if(req.method=="POST"){
@@ -48,7 +49,7 @@ function respondToRequest(stor){
     }else{
         stor.headCode = 404;
         stor.headInf = {'Content-Type': 'text/html'};
-        fs.readFile('htmlfiles/error.html', function(error, dat){
+        fs.readFile('public/error.html', function(error, dat){
             if(!error){
                 stor.content=dat.toString();
             }else{
@@ -68,10 +69,10 @@ function serverRouting(stor, callback){
     stor.error = "";
     
     stor.pathname = ((stor.pathname=="/")?"index.html": stor.pathname);
-    console.log
+
     if(Object.keys(stor.pg).length === 0){
         //if no get and POST were given
-        fs.readFile('htmlfiles/calendar.html', function(err, dat){
+        fs.readFile('public/'+stor.pathname, function(err, dat){
             stor.error = err;
             stor.content = dat.toString();
             
@@ -87,7 +88,7 @@ function serverRouting(stor, callback){
             break;
             default :
                 //if you wanna have a pagecall it has to be here
-                fs.readFile('htmlfiles/pagenotfound.html', function(err, dat){
+                fs.readFile('public/pagenotfound.html', function(err, dat){
                     stor.error += err;
                     stor.content = dat.toString();
                     
@@ -140,8 +141,6 @@ function SessionStore(){
         if(stor.cookie.sid){
             if(!this.session.has(sid)){
                 stor.ncookie += this.newSession({'sid':sid});
-            }else{
-                console.log("sesssion exists :)");
             }
         }else{
             sid = this.generateKey();
@@ -171,11 +170,9 @@ function SessionStore(){
         }
     };
     this.generateKey = function(){
-        return Math.random().toString();
-        /*
         var sha = crypto.createHash('sha256');
         sha.update(Math.random().toString());
-        return sha.digest('hex');   */     
+        return sha.digest('hex');
     }
 }
 
