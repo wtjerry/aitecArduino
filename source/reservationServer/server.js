@@ -12,6 +12,14 @@ var all_session = new sessionStore();
 
 http.createServer(function (req, res){
     try{
+        var database = new Database();
+        database.connection.connect(function(err){
+            if(err){
+                console.log("error when connecting to db");
+
+            }
+        });
+        database.connection.end();
         var stor = {
             'req': req,
             'res': res,
@@ -31,7 +39,7 @@ http.createServer(function (req, res){
             });
         }else{
             stor.get = url.parse(req.url, true).query;
-                stor.pg = stor.get;
+            stor.pg = stor.get;
             serverRouting(stor, respondToRequest);
         }
     }catch(error){
@@ -68,35 +76,70 @@ function writeResponse(headCode, headInf, content, res, ses){
 }
 function serverRouting(stor, callback){
     stor.error = "";
-    
-    stor.pathname = ((stor.pathname=="/")?"index.html": stor.pathname);
-
-    if(Object.keys(stor.pg).length === 0){
-        //if no get and POST were given
+    console.log("Post or Get variables: "+JSON.stringify(stor.pg));
+    var prepareFile = function(){
         fs.readFile('public/'+stor.pathname, function(err, dat){
             stor.error = err;
             stor.content = dat.toString();
-            
+
             callback(stor);
         });
-    }else{
+    }
+    stor.pathname = ((stor.pathname=="/")?"/index.html": stor.pathname);
+
+    //if(Object.keys(stor.pg).length === 0){
+        //if no get and POST were given
+        switch(stor.pathname){
+            //here you define all the pages, with special treatment.
+            case '/index.html':
+                switch(stor.pg.action){
+                    case 'test':
+                        stor.content = "Do whatever you want!";
+                        callback(stor);
+                        break;
+                    case 'signing':
+                        break;
+                    case 'reservate':
+                        break;
+                    case 'getreservation':
+                        break;
+                    default:
+                        prepareFile();
+                }
+                break;
+            case '/sensordata':
+                if(stor.post.sensor1 && stor.post.sensor2 && stor.post.isoccupied){
+
+                }
+            default:
+                prepareFile();
+        }
+    //}else{
     //if there is an action to be done it has to be defined here.
-        switch (stor.pg){
+        /*switch (stor.pg.action){
             case 'test':
                 stor.content = "Do whatever you want!";
                 
                 callback(stor);
-            break;
+                break;
+            case 'signing':
+                break;
+            case 'reservate':
+                break;
+            case 'getreservation':
+                break;
             default :
                 //if you wanna have a pagecall it has to be here
                 fs.readFile('public/pagenotfound.html', function(err, dat){
-                    stor.error += err;
+                    if(!(err === "undefined"))
+                        stor.error = err;
                     stor.content = dat.toString();
+                    console.log(stor.err);
                     
                     callback(stor);
                 });
         }
-    }
+    }*/
 }
 function post(req, callback){
     var fullBody='';
@@ -124,20 +167,22 @@ function parseCookies (request) {
 
 var Database = function(){
     this.connection = mysql.createConnection({
-        host     : 'aitec',
-        user     : 'aitec',
+        host     : '192.168.56.101',
+        user     : 'park_shit',
         password : 'dachs',
-        database : 'aitec_project_parking'
+        database : 'park_shit',
+        port     : '3306'
+
     });
 
     this.query = function(queryString, parameters, callback){
         if(parameters instanceof Array){
-            connection.connect(callback);
+            this.connection.connect(callback);
             if(parameters.length > 0)
-                connection.query(queryString, parameters, callback);
+                this.connection.query(queryString, parameters, callback);
             else
-                connection.query(queryString, callback);
-            connection.end(callback);
+                this.connection.query(queryString, callback);
+            this.connection.end(callback);
         }
     }
 
