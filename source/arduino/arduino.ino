@@ -1,8 +1,12 @@
 #include <SPI.h>
 #include <Ethernet.h>
+#include <Ultrasonic.h>
 
-#define SENSOR1_PIN 1
-#define SENSOR2_PIN 2
+
+  //Define Sensors
+Ultrasonic UltraSonic1(7);
+Ultrasonic UltraSonic2(8);
+
 
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -25,16 +29,20 @@ int periodicDelay = 500;
 long lastMillis = -1;
 int serverCallDelay = 30000;
 long lastTimeServerWasCalled = -1;
+int parkingLotState = 0;
+
 
 enum {
   IS_OCCUPIED = 1,
   IS_RESERVED = 2
 };
-int parkingLotState = 0;
 
 void setup() {
-  pinMode(SENSOR1_PIN, INPUT);
-  pinMode(SENSOR2_PIN, INPUT);
+    
+  /* No Longer in Use
+  *  pinMode(UltraSonic1, INPUT);
+  *  pinMode(UltraSonic2, INPUT);
+  */
   
  // Open serial communications and wait for port to open:
   Serial.begin(9600);
@@ -104,8 +112,8 @@ void displayParkingLotState() {
 
 void updateParkingLotState(long currentMillis)
 {
-  int sensor1Value = analogRead(SENSOR1_PIN);
-  int sensor2Value = analogRead(SENSOR2_PIN);
+  int sensor1Value = UltraSonic1.MeasureInCentimeters();
+  int sensor2Value = UltraSonic2.MeasureInCentimeters();
   bool isOccupied = computeAndSetOccupiedState(sensor1Value, sensor2Value);
   setParkingLotState(isOccupied);
 
