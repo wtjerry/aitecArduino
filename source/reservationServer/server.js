@@ -5,9 +5,10 @@ var querystring = require('querystring');
 var utils = require ('utils');
 var mysql = require('mysql');
 var crypto = require('crypto');
+var sessionStore = require('./bin/SessionStore').SessionStore;
 //cannot download crypto at work.
 
-var all_session = new SessionStore();
+var all_session = new sessionStore();
 
 http.createServer(function (req, res){
     try{
@@ -121,59 +122,25 @@ function parseCookies (request) {
     return list;
 }
 
-function SessionStore(){
-    this.session = new Map();
-    
-    this.newSession = function(sessionParam){
-        if(sessionParam.sid){
-            if(!this.session.has(sessionParam.sid)){
-                this.session.set(sessionParam.sid, sessionParam);
-                return ('sid='+ sessionParam.sid +";");
-            }else{
-                throw new Error("Session is in use!");
-            }
-        }else{
-            throw new Error("Invalid sessionrequest!");
+var Database = function(){
+    this.connection = mysql.createConnection({
+        host     : 'aitec',
+        user     : 'aitec',
+        password : 'dachs',
+        database : 'aitec_project_parking'
+    });
+
+    this.query = function(queryString, parameters, callback){
+        if(parameters instanceof Array){
+            connection.connect(callback);
+            if(parameters.length > 0)
+                connection.query(queryString, parameters, callback);
+            else
+                connection.query(queryString, callback);
+            connection.end(callback);
         }
-    };
-    this.startSession = function(stor){
-        sid = stor.cookie.sid;
-        if(stor.cookie.sid){
-            if(!this.session.has(sid)){
-                stor.ncookie += this.newSession({'sid':sid});
-            }
-        }else{
-            sid = this.generateKey();
-            stor.ncookie += this.newSession({'sid':sid});
-        }
-        return this.getSession(sid);
     }
-    this.getSession = function(sid){
-        if(this.session.has(sid)){
-            return this.session.get(sid);
-        }else{
-            throw new Error("There is no such key!");
-        }
-    };
-    
-    this.setSession = function(params){
-        this.newSession(params);
-    };
-    
-    this.killSession = function(){
-        
-    };
-    
-    this.updateSession = function(sid, sessionParam){
-        if(this.session.has(sid)){
-            this.session.set(sid, sessionParam);
-        }
-    };
-    this.generateKey = function(){
-        var sha = crypto.createHash('sha256');
-        sha.update(Math.random().toString());
-        return sha.digest('hex');
-    }
+
 }
 
 
