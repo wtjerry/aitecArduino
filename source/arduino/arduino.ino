@@ -9,7 +9,7 @@ Ultrasonic UltraSonic2(8);
 
 
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0xBD, 0x5F };
 
 IPAddress server(192,168,2,205);  // IP of the webserver to reach (use host ip if used in virtualbox)
 
