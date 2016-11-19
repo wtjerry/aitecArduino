@@ -3,23 +3,16 @@ var url = require('url');
 var fs = require('fs');
 var querystring = require('querystring');
 var utils = require ('utils');
-var mysql = require('mysql');
-var crypto = require('crypto');
-var sessionStore = require('./bin/SessionStore').SessionStore;
-//cannot download crypto at work.
+var passwordHash = require('password-hash');
+
+var sessionStore = require('./bin/SessionStore.js').SessionStore;
+var Database = require('./bin/Database.js').Database;
 
 var all_session = new sessionStore();
+var database = new Database();
 
 http.createServer(function (req, res){
     try{
-        var database = new Database();
-        database.connection.connect(function(err){
-            if(err){
-                console.log("error when connecting to db");
-
-            }
-        });
-        database.connection.end();
         var stor = {
             'req': req,
             'res': res,
@@ -53,7 +46,7 @@ http.createServer(function (req, res){
 function respondToRequest(stor){
     if(!(stor.error)){
         stor.headCode = 200;
-        stor.headInf = {'Content-Type': 'text/html', 'Set-Cookie': stor.ncookie};
+        stor.headInf = {'Content-Type': 'text/html', 'Set-Cookie': stor.ncookie, 'expires' : new Date(new Date().getTime()+86409000).toUTCString()};
         writeResponse(stor.headCode, stor.headInf, stor.content, stor.res, stor.session);
     }else{
         stor.headCode = 404;
@@ -84,62 +77,58 @@ function serverRouting(stor, callback){
 
             callback(stor);
         });
-    }
+    };
     stor.pathname = ((stor.pathname=="/")?"/index.html": stor.pathname);
-
-    //if(Object.keys(stor.pg).length === 0){
-        //if no get and POST were given
-        switch(stor.pathname){
-            //here you define all the pages, with special treatment.
-            case '/index.html':
-                switch(stor.pg.action){
-                    case 'test':
-                        stor.content = "Do whatever you want!";
-                        callback(stor);
-                        break;
-                    case 'signing':
-                        break;
-                    case 'reservate':
-                        break;
-                    case 'getreservation':
-                        break;
-                    default:
-                        prepareFile();
-                }
-                break;
-            case '/sensordata':
-                if(stor.post.sensor1 && stor.post.sensor2 && stor.post.isoccupied){
-
-                }
-            default:
-                prepareFile();
-        }
-    //}else{
-    //if there is an action to be done it has to be defined here.
-        /*switch (stor.pg.action){
-            case 'test':
-                stor.content = "Do whatever you want!";
-                
-                callback(stor);
-                break;
-            case 'signing':
-                break;
-            case 'reservate':
-                break;
-            case 'getreservation':
-                break;
-            default :
-                //if you wanna have a pagecall it has to be here
-                fs.readFile('public/pagenotfound.html', function(err, dat){
-                    if(!(err === "undefined"))
-                        stor.error = err;
-                    stor.content = dat.toString();
-                    console.log(stor.err);
-                    
+    switch(stor.pathname){
+        //here you define all the pages, with special treatment.
+        case '/index.html':
+            switch(stor.pg.action){
+                case 'test':
+                    stor.content = JSON.stringify(isLogedIn(stor.session))+"<br>"+JSON.stringify(stor.session);
                     callback(stor);
-                });
-        }
-    }*/
+                    break;
+                case 'signing':
+                    if(typeof stor.pg.username !== "undefined" && typeof stor.pg.password !== "undefined" ){
+                        database.query("SELECT * FROM users WHERE username = ?", [stor.pg.username], function(err, row){
+                            stor.content = "Something went wrong!!!";
+                            if(!err){
+                                if(row.length==1){
+                                    if(passwordHash.verify(stor.pg.password, row[0].password)){
+                                        stor.session.username = row[0].username;
+                                        stor.session.surname = row[0].surname;
+                                        stor.session.familyname = row[0].familyname;
+                                        stor.session.email = row[0].email;
+                                        all_session.updateSession(stor.session);
+                                        stor.content = "success";               // TODO
+                                    }else{
+                                        stor.content = "Username or Password is wrong";
+                                    }
+                                }else{
+                                    stor.content = "Username or Password is wrong";
+                                }
+                            }
+                            callback(stor);
+                        });
+                    }else{
+                        stor.content = JSON.stringify({error: "no valid inputs!"});
+                        callback(stor);
+                    }
+                    break;
+                case 'reservate':
+                    break;
+                case 'getreservation':
+                    break;
+                default:
+                    prepareFile();
+            }
+            break;
+        case '/sensordata':
+            if(stor.post.sensor1 && stor.post.sensor2 && stor.post.isoccupied){
+                
+            }
+        default:
+            prepareFile();
+    }
 }
 function post(req, callback){
     var fullBody='';
@@ -164,29 +153,7 @@ function parseCookies (request) {
 
     return list;
 }
-
-var Database = function(){
-    this.connection = mysql.createConnection({
-        host     : '192.168.56.101',
-        user     : 'park_shit',
-        password : 'dachs',
-        database : 'park_shit',
-        port     : '3306'
-
-    });
-
-    this.query = function(queryString, parameters, callback){
-        if(parameters instanceof Array){
-            this.connection.connect(callback);
-            if(parameters.length > 0)
-                this.connection.query(queryString, parameters, callback);
-            else
-                this.connection.query(queryString, callback);
-            this.connection.end(callback);
-        }
-    }
-
+function isLogedIn(session){
+    return (typeof session.username !== "undefined");
 }
-
-
 console.log('Server running at http://127.0.0.1:80/');
