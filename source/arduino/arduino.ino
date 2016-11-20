@@ -11,7 +11,7 @@ Ultrasonic UltraSonic2(8);
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0xBD, 0x5F };
 
-IPAddress server(192,168,2,205);  // IP of the webserver to reach (use host ip if used in virtualbox)
+IPAddress server(192,168,2,203);  // IP of the webserver to reach (use host ip if used in virtualbox)
 
 IPAddress ip(192,168,2,200);      // IP of the arduino device (can be set to your needs)
 
@@ -63,6 +63,9 @@ int sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
   if (client.connect(server, 1337)) {
     Serial.println("connected");
     char buf[100];
+    Serial.println(sensor1Value);
+    Serial.println(sensor2Value);
+    Serial.println(isOccupied);
     sprintf(buf, "{\"sSensor1\":%d}",sensor1Value);
     sprintf(buf, "{\"sSensor2\":%d}",sensor2Value);
     sprintf(buf, "{\"sIsOccupied\":%d}",isOccupied);
