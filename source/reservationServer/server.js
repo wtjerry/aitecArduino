@@ -7,9 +7,11 @@ var passwordHash = require('password-hash');
 
 var sessionStore = require('./bin/SessionStore.js').SessionStore;
 var Database = require('./bin/Database.js').Database;
+var SensorOccupied = require('./bin/SensorOccupied');
 
 var all_session = new sessionStore();
 var database = new Database();
+var sensor = new SensorOccupied();
 
 http.createServer(function (req, res){
     try{
@@ -161,7 +163,16 @@ function serverRouting(stor, callback){
             break;
         case '/sensordata':
             if(stor.post.sensor1 && stor.post.sensor2 && stor.post.isoccupied){
-                
+                if(sensor.updateSensors(stor.post.sensor1, stor.post.sensor2, stor.post.isoccupied)){
+                    database.query("SELECT * FROM reservation WHERE startdate<=now() AND enddate>=now()", function(error, rows){
+                        if(!error){
+                            stor.content = rows.length;
+                        }else
+                            stor.content = -1;
+                    }
+                }else{
+                    stor.content = -1;
+                }
             }
         default:
             prepareFile();
