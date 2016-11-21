@@ -115,8 +115,45 @@ function serverRouting(stor, callback){
                     }
                     break;
                 case 'reservate':
+                    if(typeof stor.pg.startdate !== "undefined" && typeof stor.pg.enddate !== "undefined" && typeof stor.pg.description !== "undefined" && isLogedIn()){
+                        database.query("SELECT count(*) FROM reservation WHERE date>=? AND date<=?",[stor.pg.startdate,stor.pg.enddate], function(error, rows){
+                            stor.content = {message: "This date is already reserved"};
+                            if(!error){
+                                if(row.length==0){
+                                    database.query(/* TODO */, [stor.pg.startdate, stor.pg.enddate, stor.pg.description, stor.session.username], function(err, row){
+                                        //TODO
+                                    });
+                                }
+                            }
+                        });
+                    }
                     break;
                 case 'getreservation':
+                    if(typeof stor.pg.month !== "undefined"){
+                        database.query("SELECT * FROM reservation WHERE date>=? AND date<=?", [stor.pg.month, stor.pg.month], function(error, rows){
+                            if(!error){
+                                stor.content = rows;
+                            }else
+                                stor.content = {message: "There went something horrible wrong"};
+                        }
+                    }
+                    break;
+               case 'signup':
+                    if(stor.pg.username && stor.pg.password && stor.pg.email && stor.pg.surname && stor.pg.familyname){
+                        database.query("SELECT * FROM user WHERE username=?", [stor.pg.username], function(error, rows){
+                            if(!error){
+                                database.query("SELECT * FROM user WHERE email=?", [stor.pg.email], function(err, row){
+                                    if(!error){
+                                        database.query( /*TODO*/, [stor.pg.username, stor.pg.email, stor.pg.password, stor.pg.surname, stor.pg.familyname], function(e, r){
+                                            if(!error){
+                                                // TODO SUCCESS
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        });    
+                    }
                     break;
                 default:
                     prepareFile();
