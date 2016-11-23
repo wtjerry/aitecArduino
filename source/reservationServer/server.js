@@ -4,6 +4,7 @@ var fs = require('fs');
 var querystring = require('querystring');
 var utils = require ('utils');
 var passwordHash = require('password-hash');
+var mime = require('mime-types')
 
 var sessionStore = require('./bin/SessionStore.js').SessionStore;
 var Database = require('./bin/Database.js').Database;
@@ -40,15 +41,17 @@ http.createServer(function (req, res){
     }catch(error){
         console.log(error);
         res.writeHead(404, {'Content-Type': 'text/html'});
-        res.end("<html><head><title>ERROR</title></head><body>Internal Server Error </body></html>");
+        res.end("<html><head><title>ERROR</title></head><body>Internal Server Error </body></html>"); 
     }
-}).listen(80);
+}).listen(8070);
 
 
 function respondToRequest(stor){
     if(!(stor.error)){
+        //var contentType = mime.lookup(stor.pathname);  //.substr(stor.pathname.lastIndexOf('.')+1)=='css'?'text/css':'text/html';
+        
         stor.headCode = 200;
-        stor.headInf = {'Content-Type': 'text/html', 'Set-Cookie': stor.ncookie, 'expires' : new Date(new Date().getTime()+86409000).toUTCString()};
+        stor.headInf = {'Content-Type': mime.lookup(stor.pathname), 'Set-Cookie': stor.ncookie, 'expires' : new Date(new Date().getTime()+86409000).toUTCString()};
         writeResponse(stor.headCode, stor.headInf, stor.content, stor.res, stor.session);
     }else{
         stor.headCode = 404;
@@ -72,18 +75,32 @@ function writeResponse(headCode, headInf, content, res, ses){
 function serverRouting(stor, callback){
     stor.error = "";
     console.log("Post or Get variables: "+JSON.stringify(stor.pg));
-    var prepareFile = function(){
+    var prepareFile = function(file){
         fs.readFile('public/'+stor.pathname, function(err, dat){
-            stor.error = err;
-            stor.content = dat.toString();
-
-            callback(stor);
+            if(!err){
+                stor.error = err;
+                stor.content = dat.toString();
+                callback(stor);
+            }else{
+                console.log(err);
+                stor.content = "Error";
+                callback(stor);
+            }
         });
     };
     stor.pathname = ((stor.pathname=="/")?"/index.html": stor.pathname);
     switch(stor.pathname){
         //here you define all the pages, with special treatment.
         case '/index.html':
+                if(isLogedIn(stor.session)){
+                    stor.pathname = "/calendar.html";
+                    prepareFile();
+                }else{
+                    stor.pathname = "/login.html";
+                    prepareFile();
+                }
+            break;
+        case '/request.html':
             switch(stor.pg.action){
                 case 'test':
                     stor.content = JSON.stringify(isLogedIn(stor.session))+"<br>"+JSON.stringify(stor.session);
@@ -117,12 +134,12 @@ function serverRouting(stor, callback){
                     }
                     break;
                 case 'reservate':
-                    if(typeof stor.pg.startdate !== "undefined" && typeof stor.pg.enddate !== "undefined" && typeof stor.pg.description !== "undefined" && isLogedIn()){
+                    if(typeof stor.pg.startdate !== "undefined" && typeof stor.pg.enddate !== "undefined" && typeof stor.pg.description !== "undefined" && isLogedIn(stor.session)){
                         database.query("SELECT count(*) FROM reservation WHERE date>=? AND date<=?",[stor.pg.startdate,stor.pg.enddate], function(error, rows){
                             stor.content = {message: "This date is already reserved"};
                             if(!error){
                                 if(row.length==0){
-                                    database.query(/* TODO */, [stor.pg.startdate, stor.pg.enddate, stor.pg.description, stor.session.username], function(err, row){
+                                    database.query(""/* TODO */, [stor.pg.startdate, stor.pg.enddate, stor.pg.description, stor.session.username], function(err, row){
                                         //TODO
                                     });
                                 }
@@ -137,7 +154,7 @@ function serverRouting(stor, callback){
                                 stor.content = rows;
                             }else
                                 stor.content = {message: "There went something horrible wrong"};
-                        }
+                        });
                     }
                     break;
                case 'signup':
@@ -146,15 +163,15 @@ function serverRouting(stor, callback){
                             if(!error){
                                 database.query("SELECT * FROM user WHERE email=?", [stor.pg.email], function(err, row){
                                     if(!error){
-                                        database.query( /*TODO*/, [stor.pg.username, stor.pg.email, stor.pg.password, stor.pg.surname, stor.pg.familyname], function(e, r){
+                                        database.query( ""/*TODO*/, [stor.pg.username, stor.pg.email, stor.pg.password, stor.pg.surname, stor.pg.familyname], function(e, r){
                                             if(!error){
                                                 // TODO SUCCESS
                                             }
                                         });
                                     }
-                                }
+                                });
                             }
-                        });    
+                        });
                     }
                     break;
                 default:
@@ -169,11 +186,20 @@ function serverRouting(stor, callback){
                             stor.content = rows.length;
                         }else
                             stor.content = -1;
-                    }
+                    });
                 }else{
                     stor.content = -1;
                 }
             }
+            break;
+        case '/calendar.html':
+            if(!isLogedIn(stor.session)){
+                prepareFile();
+            }else{
+                stor.pathname = "/login.html";
+                prepareFile();                
+            }
+            break;
         default:
             prepareFile();
     }
@@ -204,4 +230,5 @@ function parseCookies (request) {
 function isLogedIn(session){
     return (typeof session.username !== "undefined");
 }
-console.log('Server running at http://127.0.0.1:80/');
+console.log('Server running at http://127.0.0.1:8070/');
+database.testConnection();

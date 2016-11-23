@@ -58,5 +58,14 @@ exports.Database = function (){
     this.encapsulation = function(string){
         string = entities.encode(string);
     };
-
-}
+    this.testConnection = function(){
+        this.pool.getConnection(function(error, connection){
+            if(error){
+                console.log("There has been a problem with the DB connection!");
+                return;
+            }
+            connection.release();
+        });
+    };
+    
+};
