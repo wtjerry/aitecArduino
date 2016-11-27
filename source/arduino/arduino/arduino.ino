@@ -225,7 +225,8 @@ EthernetClient client;
 
 
 boolean requestOngoing = false;
-int sensorIsOccupied = 1;
+int sensorIsOccupied1 = 5; //i
+int sensorIsOccupied2 = 12; //in cm
 long initialStartTime = -1;
 int firstStartDelay = 1000; 
 int periodicDelay = 500;
@@ -250,12 +251,11 @@ void setup() {
   //Initialize LED Display
   Wire.begin();
   SeeedOled.init();  //initialze SEEED OLED display
-
   SeeedOled.clearDisplay();          //clear the screen and set start position to top left corner
   SeeedOled.setNormalDisplay();      //Set display to normal mode (i.e non-inverse mode)
   SeeedOled.setPageMode();           //Set addressing mode to Page Mode
   SeeedOled.setTextXY(0,0);          //Set the cursor to Xth Page, Yth Column  
-  SeeedOled.putString("Hello World!");
+  SeeedOled.putString("Initializing...");
   
  // Open serial communications and wait for port to open:
   Serial.begin(9600);
@@ -312,7 +312,7 @@ void setParkingLotState(bool areBothSensorsOccupied) {
 
 bool computeAndSetOccupiedState(int sensor1Value, int sensor2Value)
 {
-  bool areBothSensorsOccupied = sensor1Value >= sensorIsOccupied && sensor2Value >= sensorIsOccupied;
+  bool areBothSensorsOccupied = sensor1Value <= sensorIsOccupied1 && sensor2Value <= sensorIsOccupied2;
   return areBothSensorsOccupied;
 }
 
@@ -384,5 +384,5 @@ void loop()
     }
   }
   
-  delay(1); // Stability
+  delay(5000); // Stability
 }
