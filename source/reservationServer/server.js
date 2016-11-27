@@ -4,11 +4,11 @@ var fs = require('fs');
 var querystring = require('querystring');
 var utils = require ('utils');
 var passwordHash = require('password-hash');
-var mime = require('mime-types')
+var mime = require('mime-types');
 
 var sessionStore = require('./bin/SessionStore.js').SessionStore;
 var Database = require('./bin/Database.js').Database;
-var SensorOccupied = require('./bin/SensorOccupied');
+var SensorOccupied = require('./bin/SensorOccupied.js');
 
 var all_session = new sessionStore();
 var database = new Database();
@@ -43,7 +43,7 @@ http.createServer(function (req, res){
         res.writeHead(404, {'Content-Type': 'text/html'});
         res.end("<html><head><title>ERROR</title></head><body>Internal Server Error </body></html>"); 
     }
-}).listen(8070);
+}).listen(80);
 
 
 function respondToRequest(stor){
@@ -76,12 +76,13 @@ function serverRouting(stor, callback){
     stor.error = "";
     console.log("Post or Get variables: "+JSON.stringify(stor.pg));
     var prepareFile = function(file){
-        fs.readFile('public/'+stor.pathname, function(err, dat){
+        fs.readFile('public'+stor.pathname, function(err, dat){
             if(!err){
                 stor.error = err;
                 stor.content = dat.toString();
                 callback(stor);
             }else{
+                stor.error = err;
                 console.log(err);
                 stor.content = "Error";
                 callback(stor);
@@ -230,5 +231,5 @@ function parseCookies (request) {
 function isLogedIn(session){
     return (typeof session.username !== "undefined");
 }
-console.log('Server running at http://127.0.0.1:8070/');
+console.log('Server running at http://127.0.0.1:80/');
 database.testConnection();

@@ -1,5 +1,6 @@
-module.exports = {}
+module.exports = {};
 var exports = module.exports = {};
+var crypto = require('crypto');
 
 exports.SessionStore = function (){
     this.session = new Map();
