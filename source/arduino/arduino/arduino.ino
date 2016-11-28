@@ -279,12 +279,12 @@ int sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
     Serial.println(sensor1Value);
     Serial.println(sensor2Value);
     Serial.println(isOccupied);
-    sprintf(buf, "{\"sSensor1\":%d}",sensor1Value);
-    sprintf(buf, "{\"sSensor2\":%d}",sensor2Value);
-    sprintf(buf, "{\"sIsOccupied\":%d}",isOccupied);
+    sprintf(buf, "{\"ssensor1\":%d}",sensor1Value);
+    sprintf(buf, "{\"ssensor2\":%d}",sensor2Value);
+    sprintf(buf, "{\"sisOccupied\":%d}",isOccupied);
     
     // Make a HTTP request:
-    client.println("POST /rest-example/pushServer.php HTTP/1.1");
+    client.println("POST /sensordata HTTP/1.1");
     client.println("Host: 192.168.2.205");
     client.println("Connection: close");
     client.println("Content-Type: application/json");
