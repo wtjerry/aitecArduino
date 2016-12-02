@@ -285,6 +285,7 @@ int sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
     
     // Make a HTTP request:
     client.println("POST /sensordata HTTP/1.1");
+    client.println("Host: 192.168.2.203:1337");
     client.println("Connection: close");
     client.println("Content-Type: application/json");
     client.println("Content-Length: 14");
