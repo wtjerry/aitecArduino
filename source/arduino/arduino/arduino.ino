@@ -207,8 +207,8 @@ static unsigned char RESERVED[] PROGMEM ={
 };
 
   //Define Sensors
-Ultrasonic UltraSonic1(7);
-Ultrasonic UltraSonic2(8);
+Ultrasonic UltraSonic1(7); //Sensor unten
+Ultrasonic UltraSonic2(8); //Sensor Oben
 
 
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -225,8 +225,8 @@ EthernetClient client;
 
 
 boolean requestOngoing = false;
-int sensorIsOccupied1 = 5; //i
-int sensorIsOccupied2 = 12; //in cm
+int sensorIsOccupied1 = 9; //in cm
+int sensorIsOccupied2 = 15; //in cm
 long initialStartTime = -1;
 int firstStartDelay = 1000; 
 int periodicDelay = 500;
@@ -285,7 +285,6 @@ int sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
     
     // Make a HTTP request:
     client.println("POST /sensordata HTTP/1.1");
-    client.println("Host: 192.168.2.205");
     client.println("Connection: close");
     client.println("Content-Type: application/json");
     client.println("Content-Length: 14");
