@@ -155,8 +155,26 @@ float: left;
 #both{
     width: 900px;
     margin: auto;
-    margin-top:100px;
+    margin-top:20px;
 }
 .freetime{
     background-color:#EEE;
+}
+.selected{
+    color: red !important;
+}
+.olddate{
+    color: lightgray !important;
+    cursor: default !important;
+}
+.reserved{
+    background-color:orange;
+}
+#occupied{
+    border-radius: 50px;
+    margin:auto;
+    height:100px;
+    width:100px;
+    text-align: center;
+    line-height: 100px;
 }

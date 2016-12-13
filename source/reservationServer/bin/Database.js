@@ -14,7 +14,8 @@ exports.Database = function (){
         password : 'dachs',
         database : 'park_shit',
         port     : '3306',
-        debug    :  false
+        debug    :  false,
+        dateStrings: 'datetime'
 
     });
     this.query = function(quer, callback){
@@ -36,7 +37,7 @@ exports.Database = function (){
         });
     };
     this.query = function(quer, array, callback){
-        array.forEach(this.encapsulation);
+        //array.forEach(this.encapsulation);
         this.pool.getConnection(function(error, connection){
             if(error){
                 console.log("Error during databaseconnection.");
@@ -46,6 +47,9 @@ exports.Database = function (){
                 connection.release();
                 if(!err) {
                     callback("", rows);
+                }else{
+                    console.log(err);
+                    callback(err, "");
                 }
             });
             connection.on('error', function(err) {
@@ -56,7 +60,7 @@ exports.Database = function (){
 
     };
     this.encapsulation = function(string){
-        string = entities.encode(string);
+        //string = entities.encode(string);
     };
     this.testConnection = function(){
         this.pool.getConnection(function(error, connection){

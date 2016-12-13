@@ -8,11 +8,13 @@ var mime = require('mime-types');
 
 var sessionStore = require('./bin/SessionStore.js').SessionStore;
 var Database = require('./bin/Database.js').Database;
-var SensorOccupied = require('./bin/SensorOccupied.js');
+var SensorOccupied = require('./bin/SensorOccupied.js').SensorOccupied;
 
 var all_session = new sessionStore();
 var database = new Database();
 var sensor = new SensorOccupied();
+
+const PORT = 3000
 
 http.createServer(function (req, res){
     try{
@@ -43,7 +45,7 @@ http.createServer(function (req, res){
         res.writeHead(404, {'Content-Type': 'text/html'});
         res.end("<html><head><title>ERROR</title></head><body>Internal Server Error </body></html>"); 
     }
-}).listen(80);
+}).listen(PORT);
 
 
 function respondToRequest(stor){
@@ -92,7 +94,7 @@ function serverRouting(stor, callback){
     stor.pathname = ((stor.pathname=="/")?"/index.html": stor.pathname);
     switch(stor.pathname){
         //here you define all the pages, with special treatment.
-        case '/index.html':
+        /*case '/index.html':
                 if(isLogedIn(stor.session)){
                     stor.pathname = "/calendar.html";
                     prepareFile();
@@ -100,8 +102,10 @@ function serverRouting(stor, callback){
                     stor.pathname = "/login.html";
                     prepareFile();
                 }
-            break;
+            break;*/
         case '/request.html':
+        case '/request':
+            stor.pathname += ".json";
             switch(stor.pg.action){
                 case 'test':
                     stor.content = JSON.stringify(isLogedIn(stor.session))+"<br>"+JSON.stringify(stor.session);
@@ -135,28 +139,55 @@ function serverRouting(stor, callback){
                     }
                     break;
                 case 'reservate':
+                    if(typeof stor.pg.datetime !== "undefined"){
+                        database.query("SELECT count(*) as cnt FROM reservations WHERE date=?", [stor.pg.datetime], function(error, rows){
+                           if(!error){
+                               if(rows[0].cnt == 0){
+                                   database.query("INSERT INTO `reservations` (`ref_users`, `date`, `comment`) VALUES ('1', ?, ?)", [ stor.pg.datetime, stor.pg.comment ], function(err, row){
+                                       if(!err){
+                                           stor.content = JSON.stringify({success: true});
+                                       }
+                                       else{                                           
+                                            stor.content = JSON.stringify({error: true});
+                                       }
+                                       callback(stor);
+                                   });
+                               }else{
+                                            stor.content = JSON.stringify({error: true});
+                                            callback(stor);
+                               }
+                           }
+                        });
+                    }
+                    
+                    /*
                     if(typeof stor.pg.startdate !== "undefined" && typeof stor.pg.enddate !== "undefined" && typeof stor.pg.description !== "undefined" && isLogedIn(stor.session)){
                         database.query("SELECT count(*) FROM reservation WHERE date>=? AND date<=?",[stor.pg.startdate,stor.pg.enddate], function(error, rows){
                             stor.content = {message: "This date is already reserved"};
                             if(!error){
                                 if(row.length==0){
-                                    database.query(""/* TODO */, [stor.pg.startdate, stor.pg.enddate, stor.pg.description, stor.session.username], function(err, row){
+                                    database.query(""/* TODO /, [stor.pg.startdate, stor.pg.enddate, stor.pg.description, stor.session.username], function(err, row){
                                         //TODO
                                     });
                                 }
                             }
                         });
-                    }
+                    }*/
                     break;
                 case 'getreservation':
                     if(typeof stor.pg.month !== "undefined"){
-                        database.query("SELECT * FROM reservation WHERE date>=? AND date<=?", [stor.pg.month, stor.pg.month], function(error, rows){
-                            if(!error){
-                                stor.content = rows;
-                            }else
-                                stor.content = {message: "There went something horrible wrong"};
+                        database.query("SELECT * FROM reservations WHERE date>=? and date<?", [stor.pg.datestart, stor.pg.dateend], function(error, rows){
+                            if(!error)
+                                stor.content = JSON.stringify(rows);
+                            else
+                                stor.content = JSON.stringify({error:true, message: "There went something horrible wrong"});
+                            callback(stor);
                         });
                     }
+                    break;
+                case 'getOccupied':
+                    stor.content = JSON.stringify({occupied:(sensor.getOccupiedState())});
+                    callback(stor);
                     break;
                case 'signup':
                     if(stor.pg.username && stor.pg.password && stor.pg.email && stor.pg.surname && stor.pg.familyname){
@@ -231,5 +262,5 @@ function parseCookies (request) {
 function isLogedIn(session){
     return (typeof session.username !== "undefined");
 }
-console.log('Server running at http://127.0.0.1:80/');
+console.log('Server running at http://127.0.0.1:'+PORT+'/');
 database.testConnection();
