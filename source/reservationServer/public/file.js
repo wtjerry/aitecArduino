@@ -82,6 +82,11 @@ $(document).ready(function() {
             month++;
         updateMonth(month, year);
     });
+    $('#occupied').click(function(){
+        $.post('sensordata',{sensor1:1, sensor2:2, isoccupied:true},function(data){
+            console.log(JSON.stringify(data));
+        });
+    });
     updateOccupied();
     window.setInterval(updateOccupied, time);
 });

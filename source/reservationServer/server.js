@@ -212,6 +212,7 @@ function serverRouting(stor, callback){
             break;
         case '/sensordata':
             if(stor.post.sensor1 && stor.post.sensor2 && stor.post.isoccupied){
+                console.log("TRUE");
                 if(sensor.updateSensors(stor.post.sensor1, stor.post.sensor2, stor.post.isoccupied)){
                     database.query("SELECT * FROM reservation WHERE startdate<=now() AND enddate>=now()", function(error, rows){
                         if(!error){
