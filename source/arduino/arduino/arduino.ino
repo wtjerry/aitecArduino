@@ -276,26 +276,39 @@ int sendHttpRequest(int sensor1Value, int sensor2Value, bool isOccupied) {
 
   if (client.connect(server, 1337)) {
     Serial.println("connected");
-    char buf[100];
+    String buf = "";
+
+    //char buf[100];
+    buf += "sensor1=";
+    buf += sensor1Value;
+    buf += "&sensor2=";
+    buf += sensor2Value;
+    buf += "&isoccupied=";
+    buf += isOccupied;
+    
+    //sprintf(buf + strlen(buf), "\"&sensor2\":%d",sensor2Value);
+    //sprintf(buf + strlen(buf), "\"&isOccupied\":%d}",isOccupied);
     Serial.println(sensor1Value);
     Serial.println(sensor2Value);
     Serial.println(isOccupied);
-    sprintf(buf, "{\"ssensor1\":%d}",sensor1Value);
-    sprintf(buf, "{\"ssensor2\":%d}",sensor2Value);
-    sprintf(buf, "{\"sisOccupied\":%d}",isOccupied);
+    Serial.println(buf);
+    Serial.println(buf.length());
 
     // Make a HTTP request:
     client.println("POST /sensordata HTTP/1.1");
     client.println("Host: 192.168.2.203:1337");
     client.println("Connection: close");
     client.println("Content-Type: application/json");
-    client.println("Content-Length: 14");
+    client.print("Content-Length: ");
+    client.println(buf.length());
     client.println();                                              // This empty line is needed as request body is always separated by an empty line
     client.println(buf);
 
-    char c = client.read();
-    Serial.print(c);
-    return c;                    
+    //char c = client.read();
+
+    int returnValue = client.read();
+    Serial.print(returnValue);
+    return returnValue;                    
   } 
   else {
     Serial.println("connection failed");
