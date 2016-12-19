@@ -235,6 +235,8 @@ long lastMillis = -1;
 int serverCallDelay = 10000;
 long lastTimeServerWasCalled = -1;
 int parkingLotState = 0;
+int parkingLotState2 = 1;
+
 
 
 enum {
@@ -348,17 +350,21 @@ bool computeAndSetOccupiedState(int sensor1Value, int sensor2Value)
 
 void displayParkingLotState() {
   char color[10];
-  SeeedOled.clearDisplay();
 
-  if(parkingLotState & IS_OCCUPIED){
-     SeeedOled.drawBitmap(OCCUPIED,1024);
-  }
-
-  else if(parkingLotState){
-    SeeedOled.drawBitmap(RESERVED,1024);
-  }
-  else{
-    SeeedOled.drawBitmap(FREE,1024);
+  if(parkingLotState2 != parkingLotState){
+    parkingLotState2 = parkingLotState;
+    SeeedOled.clearDisplay();
+  
+    if(parkingLotState & IS_OCCUPIED){
+       SeeedOled.drawBitmap(OCCUPIED,1024);
+    }
+  
+    else if(parkingLotState){
+      SeeedOled.drawBitmap(RESERVED,1024);
+    }
+    else{
+      SeeedOled.drawBitmap(FREE,1024);
+    }
   }
 }
 
@@ -408,11 +414,11 @@ void loop()
     if (requestOngoing && !client.connected()) {
       Serial.println();
       Serial.println("disconnecting.");
-      client.stop();
       requestOngoing = false;
     }
   }
 
-  delay(1000); // Stability
+  client.stop();
+  delay(10000); // Stability
 }
 
